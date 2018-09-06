@@ -5,6 +5,7 @@
 (def request-methods '#{GET POST PUT DELETE PATCH})
 (def ^:dynamic *request*)
 
+
 (defmacro defreq
   ([method url return-val]
    `(defreq +default-routes+ ~method ~url ~return-val))
@@ -25,11 +26,16 @@
                  (keyword (.substring (str itm) 1))
                  (str itm)))
            assoc-path (map #(if (keyword? %) :* %) r)
-           ks (filter keyword? r)]
-       `(let [handler# ~return-val]
+           ks (filter keyword? r)
+           handler*    (gensym "handler")
+           manual-meta (meta return-val)]
+       `(let [~handler* ~return-val]
           (alter-var-root (var ~routing) assoc-in [~method ~@assoc-path :end]
-                          {:fn handler# :ks ~(vec ks) :pt ~url})
-          (var ~routing))))))
+                          {:fn ~(if manual-meta
+                                  `(with-meta ~handler* '~manual-meta)
+                                  handler*)
+                           :ks ~(vec ks)}))))))           
+
 
 (defn- get-handler-step [url routing-map params]
   (if-let [[u & url :as url-rest] (seq url)]

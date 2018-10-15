@@ -2,6 +2,10 @@
 
 Minimalist routing library.
 
+## Version
+
+[![Clojars Project](https://img.shields.io/clojars/v/io.github.erdos/routing.svg)](https://clojars.org/io.github.erdos/routing)
+
 ## Usage
 
 ```

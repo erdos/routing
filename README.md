@@ -8,6 +8,8 @@ Minimalist routing library.
 
 ## Usage
 
+First, define the routes.
+
 ```
 (require [erdos.routing :refer :all])
 
@@ -18,6 +20,8 @@ Minimalist routing library.
 ```
 
 Supported actions: `GET`, `POST`, `PUT`, `DELETE`, `*` (any).
+
+Then, call `get-handler` on a request map to get the handler function or call `handle-routes` to call the specific ring handler. The rounting data will be found under the keys `:route-params` an `:route-pattern`. You can also use the dynamic var `*request*` to access the request map.
 
 ## License
 

@@ -34,7 +34,8 @@
                           {:fn ~(if manual-meta
                                   `(with-meta ~handler* '~manual-meta)
                                   handler*)
-                           :ks ~(vec ks)}))))))           
+                           :pt ~(str url)
+                           :ks ~(vec ks)}))))))
 
 
 (defn- get-handler-step [url routing-map params]

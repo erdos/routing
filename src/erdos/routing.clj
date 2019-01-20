@@ -6,11 +6,11 @@
 (def ^:dynamic *request*)
 
 
-(defmacro defreq
+(defn defreq-fn
   ([method url return-val]
-   `(defreq +default-routes+ ~method ~url ~return-val))
+   (defreq-fn #'+default-routes+ ~method ~url ~return-val))
   ([routing method url return-val]
-   (assert (symbol? routing))
+   (assert (var? routing))
    (assert (symbol? method))
    (assert (string? url))
    (assert (.startsWith (str url) "/")
@@ -19,7 +19,8 @@
                (contains? request-methods method))
            (str "Unexpected request method: " method))
    (if ('#{* ANY} method)
-     (cons 'do (for [m request-methods] `(defreq ~routing ~m ~url ~return-val)))
+     (doseq [m request-methods]
+       (defreq-fn routing m url return-val))
      (let [method (keyword (.toLowerCase (name method)))
            r (for [itm (.split (str url) "/"), :when (seq itm)]
                (if (.startsWith (str itm) ":")
@@ -27,16 +28,21 @@
                  (str itm)))
            assoc-path (map #(if (keyword? %) :* %) r)
            ks (filter keyword? r)
-           handler*    (gensym "handler")
-           manual-meta (meta return-val)]
-       `(let [~handler* ~return-val]
-          (alter-var-root (var ~routing) assoc-in [~method ~@assoc-path :end]
-                          {:fn ~(if manual-meta
-                                  `(with-meta ~handler* '~manual-meta)
-                                  handler*)
-                           :pt ~(str url)
-                           :ks ~(vec ks)}))))))
+           manual-meta (meta return-val)
+           path (concat [method] assoc-path [:end])]
+       (alter-var-root routing assoc-in path
+                       {:fn (if manual-meta
+                              (with-meta return-val manual-meta)
+                              return-val)
+                        :pt (str url)
+                        :ks (vec ks)})))))
 
+(defmacro defreq
+  ([method url return-val]
+   `(defreq +default-routes+ ~method ~url ~return-val))
+  ([routing method url return-val]
+   (let [routing (if (symbol? routing) (resolve routing) routing)]
+     `(defreq-fn '~routing '~method '~url ~return-val))))
 
 (defn- get-handler-step [url routing-map params]
   (if-let [[u & url :as url-rest] (seq url)]
@@ -69,3 +75,10 @@
      (binding [*request* (assoc req :route-params route-params)]
        (handler *request* success error))
      (success {:status 404 :body "Route Not Found"}))))
+
+(defn wrap-routing-meta [handler]
+  (fn [request]
+    (if-let [{:keys [handler route-params route-pattern]} (get-handler req)]
+      (binding [*request* (assoc req :route-params route-params :route-pattern route-pattern)]
+        (handler *request*))
+      {:status 404 :body "Not Found"})))

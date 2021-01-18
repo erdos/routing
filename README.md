@@ -15,13 +15,13 @@ First, define the routes.
 
 (defreq GET "/api/users" (fn [req] {:status 200 :body ...}))
 (defreq POST "/api/users" (fn [req] ...))
-(defreq GET "/api/users/:user-id" (fn [req] (get-user (-> req :route-params :user-id))))
+(defreq GET "/api/users/:user-id" (fn [req] (get-user (-> req :route/params :user-id))))
 
 ```
 
 Supported actions: `GET`, `POST`, `PUT`, `DELETE`, `*` (any).
 
-Then, call `get-handler` on a request map to get the handler function or call `handle-routes` to call the specific ring handler. The rounting data will be found under the keys `:route-params` an `:route-pattern`. You can also use the dynamic var `*request*` to access the request map.
+Then, call `get-handler` on a request map to get the handler function or call `handle-routes` to call the specific ring handler. The rounting data will be found under the keys `:route/params` an `:route/pattern`. You can also use the dynamic var `*request*` to access the request map.
 
 ## License
 
